@@ -15,7 +15,14 @@ class Shader {
     void setInt(const std::string& name, int value) const;
     void setFloat(const std::string& name, float value) const;
     void setMat4(const std::string& name, const float* value) const;
+    void setVec2(const std::string& name, float x, float y) const;
     void setVec3(const std::string& name, float x, float y, float z) const;
+
+    void setUniform(const std::string& name, int value) const;
+    void setUniform(const std::string& name, float value) const;
+    void setUniform(const std::string& name, const float* value) const;
+    void setUniform(const std::string& name, float x, float y) const;
+    void setUniform(const std::string& name, float x, float y, float z) const;
 
    private:
     std::string vertexShaderSource;

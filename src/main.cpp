@@ -95,6 +95,19 @@ int main(int, char**) {
         ImGui_ImplGlfw_NewFrame();
         ImGui::NewFrame();
 
+        // render your GUI
+        ImGui::Begin("Triangle Position/Color");
+
+        static float color[4] = {1.0f, 1.0f, 1.0f, 1.0f};
+        static float scale = 1.0f;
+        ImGui::SliderFloat("scale", &scale, 0.0f, 10.0f);
+        shader.setUniform("scale", scale);
+        //  color picker
+        ImGui::ColorEdit3("color", color);
+        //  multiply triangle's color with this color
+        shader.setUniform("color", color[0], color[1], color[2]);
+        ImGui::End();
+
         // Rendering
         ImGui::Render();
         int display_w, display_h;

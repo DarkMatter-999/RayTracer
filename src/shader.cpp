@@ -101,7 +101,37 @@ void Shader::setMat4(const std::string& name, const float* value) const {
     glUniformMatrix4fv(glGetUniformLocation(ID, name.c_str()), 1, GL_FALSE, value);
 }
 
+// Set a uniform 2-component vector value
+void Shader::setVec2(const std::string& name, float x, float y) const {
+    glUniform2f(glGetUniformLocation(ID, name.c_str()), x, y);
+}
+
 // Set a uniform 3-component vector value
 void Shader::setVec3(const std::string& name, float x, float y, float z) const {
     glUniform3f(glGetUniformLocation(ID, name.c_str()), x, y, z);
+}
+
+// Set a uniform integer value
+void Shader::setUniform(const std::string& name, int value) const {
+    this->setInt(name.c_str(), value);
+}
+
+// Set a uniform float value
+void Shader::setUniform(const std::string& name, float value) const {
+    this->setFloat(name.c_str(), value);
+}
+
+// Set a uniform 4x4 matrix value
+void Shader::setUniform(const std::string& name, const float* value) const {
+    this->setMat4(name.c_str(), value);
+}
+
+// Set a uniform 3-component vector value
+void Shader::setUniform(const std::string& name, float x, float y) const {
+    this->setVec2(name.c_str(), x, y);
+}
+
+// Set a uniform 3-component vector value
+void Shader::setUniform(const std::string& name, float x, float y, float z) const {
+    this->setVec3(name.c_str(), x, y, z);
 }
