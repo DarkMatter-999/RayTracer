@@ -2,6 +2,8 @@
 #include <GLFW/glfw3.h>
 #include <stdio.h>
 
+#include <chrono>
+#include <string>
 #include <vector>
 
 #include "imgui.h"
@@ -83,6 +85,8 @@ int main(int, char**) {
     // Create a Mesh object
     Mesh mesh(vertices, indices, colors);
 
+    double prevFrameTime = glfwGetTime();
+
     // Main loop
     while (!glfwWindowShouldClose(window)) {
         // Poll and handle events (inputs, window resize, etc.)
@@ -92,6 +96,9 @@ int main(int, char**) {
         // Generally you may always pass all inputs to dear imgui, and hide them from your application based on those two flags.
         glfwPollEvents();
 
+        double currFrameTime = glfwGetTime();
+        double frameTime = (currFrameTime - prevFrameTime);
+
         // Start the Dear ImGui frame
         ImGui_ImplOpenGL3_NewFrame();
         ImGui_ImplGlfw_NewFrame();
@@ -99,6 +106,7 @@ int main(int, char**) {
 
         // render your GUI
         ImGui::Begin("Triangle Position/Color");
+        ImGui::Text("%.0f FPS | %.2f ms", (1.0f / frameTime), (frameTime * 1000.0f));
 
         static float color[4] = {1.0f, 1.0f, 1.0f, 1.0f};
         static float scale = 1.0f;
@@ -125,6 +133,7 @@ int main(int, char**) {
         ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
 
         glfwSwapBuffers(window);
+        prevFrameTime = currFrameTime;
     }
 
     // Cleanup

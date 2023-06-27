@@ -7,7 +7,7 @@ uniform vec2 iResolution;
 
 void main()
 {
-    vec3 color = vec3(1.0);
+    vec3 color = vec3(0.0);
 
     vec3 rayOrigin = vec3(0.0, 0.0, 1.0);
     vec2 ndc = (gl_FragCoord.xy / iResolution) * 2.0 - 1.0;
@@ -20,9 +20,9 @@ void main()
 
     float D = b*b - 4.0*a*c;
 
-    if (D > 0.1){
+    if (D > 0.2){
         color = vec3(1.0, 0.0, 1.0);        
-    } 
+    }
 
     FragColor = vec4(color, 1.0);
 } 
