@@ -60,22 +60,24 @@ int main(int, char**) {
     // Sample vertices
     std::vector<float> vertices = {
         // Position (x, y, z)
-        -0.5f, -0.5f, 0.0f,  // Vertex 1
-        0.5f, -0.5f, 0.0f,   // Vertex 2
-        0.0f, 0.5f, 0.0f     // Vertex 3
+        -1.0f, -1.0f, 0.0f,  // Vertex 1
+        -1.0f, 1.0f, 0.0f,   // Vertex 2
+        1.0f, 1.0f, 0.0f,    // Vertex 3
+        1.0f, -1.0f, 0.0f    // Vertex 4
     };
 
     // Sample indices
     std::vector<unsigned int> indices = {
-        0, 1, 2  // Triangle indices
-    };
+        0, 1, 2,  // Triangle indices
+        0, 2, 3};
 
     // Sample colors
     std::vector<float> colors = {
         // Color (R, G, B)
         1.0f, 0.0f, 0.0f,  // Vertex 1 color (red)
         0.0f, 1.0f, 0.0f,  // Vertex 2 color (green)
-        0.0f, 0.0f, 1.0f   // Vertex 3 color (blue)
+        0.0f, 0.0f, 1.0f,  // Vertex 3 color (blue)
+        1.0f, 1.0f, 1.0f   // Vertex 4 color (white)
     };
 
     // Create a Mesh object
@@ -107,6 +109,8 @@ int main(int, char**) {
         //  multiply triangle's color with this color
         shader.setUniform("color", color[0], color[1], color[2]);
         ImGui::End();
+
+        shader.setUniform("iResolution", 1280.0f, 720.0f);
 
         // Rendering
         ImGui::Render();
