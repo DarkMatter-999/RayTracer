@@ -86,6 +86,8 @@ int main(int, char**) {
     Mesh mesh(vertices, indices, colors);
 
     double prevFrameTime = glfwGetTime();
+    int width, height;
+    bool vsync = true;
 
     // Main loop
     while (!glfwWindowShouldClose(window)) {
@@ -98,6 +100,9 @@ int main(int, char**) {
 
         double currFrameTime = glfwGetTime();
         double frameTime = (currFrameTime - prevFrameTime);
+        glfwGetWindowSize(window, &width, &height);
+
+        glfwGetWindowSize(window, &width, &height);
 
         // Start the Dear ImGui frame
         ImGui_ImplOpenGL3_NewFrame();
@@ -106,6 +111,12 @@ int main(int, char**) {
 
         // render your GUI
         ImGui::Begin("Triangle Position/Color");
+
+        if (ImGui::Checkbox("Vsync", &vsync))
+        {
+            glfwSwapInterval(vsync ? 1 : 0);
+        }
+
         ImGui::Text("%.0f FPS | %.2f ms", (1.0f / frameTime), (frameTime * 1000.0f));
 
         static float color[4] = {1.0f, 1.0f, 1.0f, 1.0f};
@@ -118,7 +129,7 @@ int main(int, char**) {
         shader.setUniform("color", color[0], color[1], color[2]);
         ImGui::End();
 
-        shader.setUniform("iResolution", 1280.0f, 720.0f);
+        shader.setUniform("iResolution", (float)width, (float)height);
 
         // Rendering
         ImGui::Render();

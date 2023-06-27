@@ -20,8 +20,23 @@ void main()
 
     float D = b*b - 4.0*a*c;
 
-    if (D > 0.2){
-        color = vec3(1.0, 0.0, 1.0);        
+    if (D >= 0.0) {
+        color = vec3(1.0, 0.0, 1.0);
+
+        float t0 = (-b + sqrt(D)) / (2.0 * a);
+        float t1 = (-b - sqrt(D)) / (2.0 * a);
+
+        vec3 h0 = rayOrigin + rayDirection * t0;
+        vec3 h1 = rayOrigin + rayDirection * t1;
+
+        vec3 lightDir = normalize(vec3(-1));
+
+        vec3 normal = normalize(h1);
+
+        float d = max(dot(normal, -lightDir) ,0);
+
+        color *= d;
+
     }
 
     FragColor = vec4(color, 1.0);
