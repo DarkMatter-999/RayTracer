@@ -6,9 +6,11 @@
 #include <string>
 #include <vector>
 
+#include "camera.h"
 #include "imgui.h"
 #include "imgui_impl_glfw.h"
 #include "imgui_impl_opengl3.h"
+#include "input.h"
 #include "mesh.h"
 #include "shader.h"
 
@@ -88,6 +90,12 @@ int main(int, char**) {
     double prevFrameTime = glfwGetTime();
     int width, height;
     bool vsync = true;
+    float FOV = 70.0f;
+
+    glfwGetWindowSize(window, &width, &height);
+
+    Input input = Input(window);
+    Camera camera = Camera(Vector3f(0.0, 0.0, 0.0), Vector3f(0.0, 0.0, 0.0), FOV, 0.01f, 1000.0f, width, height);
 
     // Main loop
     while (!glfwWindowShouldClose(window)) {
@@ -96,11 +104,11 @@ int main(int, char**) {
         // - When io.WantCaptureMouse is true, do not dispatch mouse input data to your main application, or clear/overwrite your copy of the mouse data.
         // - When io.WantCaptureKeyboard is true, do not dispatch keyboard input data to your main application, or clear/overwrite your copy of the keyboard data.
         // Generally you may always pass all inputs to dear imgui, and hide them from your application based on those two flags.
-        glfwPollEvents();
+        input.Update();
+        camera.Update();
 
         double currFrameTime = glfwGetTime();
         double frameTime = (currFrameTime - prevFrameTime);
-        glfwGetWindowSize(window, &width, &height);
 
         glfwGetWindowSize(window, &width, &height);
 
@@ -112,8 +120,7 @@ int main(int, char**) {
         // render your GUI
         ImGui::Begin("Triangle Position/Color");
 
-        if (ImGui::Checkbox("Vsync", &vsync))
-        {
+        if (ImGui::Checkbox("Vsync", &vsync)) {
             glfwSwapInterval(vsync ? 1 : 0);
         }
 
