@@ -1,10 +1,11 @@
 #include "camera.h"
 
+#include "imgui.h"
 #include "input.h"
 #include "maths.h"
 
 Camera::Camera(const Vector3f& position, const Vector3f& rotation, float FOV, float nearClip, float farClip, float width, float height) : position(position), rotation(rotation), FOV(FOV), nearClip(nearClip), farClip(farClip) {
-    projection = Matrix4f::perspective(FOV, width / height, nearClip, farClip);
+    this->projection = Matrix4f::perspective(FOV, width / height, nearClip, farClip);
 }
 
 void Camera::Update() {
@@ -14,17 +15,17 @@ void Camera::Update() {
     float x = std::sin(toRadians(rotation.y)) * moveSpeed;
     float z = std::cos(toRadians(rotation.y)) * moveSpeed;
 
-    if (Input::IsKeyPressed(GLFW_KEY_A))
+    if (Input::IsKeyPressed(ImGuiKey_A))
         Vector3f::add(position, Vector3f(-z, 0, x));
-    if (Input::IsKeyPressed(GLFW_KEY_D))
+    if (Input::IsKeyPressed(ImGuiKey_D))
         Vector3f::add(position, Vector3f(z, 0, -x));
-    if (Input::IsKeyPressed(GLFW_KEY_W))
+    if (Input::IsKeyPressed(ImGuiKey_W))
         Vector3f::add(position, Vector3f(-x, 0, -z));
-    if (Input::IsKeyPressed(GLFW_KEY_S))
+    if (Input::IsKeyPressed(ImGuiKey_S))
         Vector3f::add(position, Vector3f(x, 0, z));
-    if (Input::IsKeyPressed(GLFW_KEY_SPACE))
+    if (Input::IsKeyPressed(ImGuiKey_Space))
         Vector3f::add(position, Vector3f(0, moveSpeed, 0));
-    if (Input::IsKeyPressed(GLFW_KEY_LEFT_CONTROL))
+    if (Input::IsKeyPressed(ImGuiKey_LeftCtrl))
         Vector3f::add(position, Vector3f(0, -moveSpeed, 0));
 
     float dx = static_cast<float>(newMouseX - oldMouseX);

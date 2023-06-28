@@ -5,6 +5,7 @@
 #include <iostream>
 #include <string>
 #include <vector>
+#include "maths.h"
 
 std::string readFile(const char* filePath);
 
@@ -23,6 +24,7 @@ class Shader {
     void setUniform(const std::string& name, const float* value) const;
     void setUniform(const std::string& name, float x, float y) const;
     void setUniform(const std::string& name, float x, float y, float z) const;
+    void setUniform(const std::string& name, Matrix4f value) const;
 
    private:
     std::string vertexShaderSource;

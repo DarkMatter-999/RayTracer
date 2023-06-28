@@ -135,3 +135,7 @@ void Shader::setUniform(const std::string& name, float x, float y) const {
 void Shader::setUniform(const std::string& name, float x, float y, float z) const {
     this->setVec3(name.c_str(), x, y, z);
 }
+
+void Shader::setUniform(const std::string& name, Matrix4f value) const {
+    this->setMat4(name.c_str(), value.getAll());
+}

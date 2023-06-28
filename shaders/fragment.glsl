@@ -7,7 +7,7 @@ uniform vec2 iResolution;
 
 void main()
 {
-    vec3 color = vec3(0.0);
+    vec3 color = vertexColor.xyz;
 
     vec3 rayOrigin = vec3(0.0, 0.0, 1.0);
     vec2 ndc = (gl_FragCoord.xy / iResolution) * 2.0 - 1.0;

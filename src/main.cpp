@@ -127,9 +127,6 @@ int main(int, char**) {
         ImGui::Text("%.0f FPS | %.2f ms", (1.0f / frameTime), (frameTime * 1000.0f));
 
         static float color[4] = {1.0f, 1.0f, 1.0f, 1.0f};
-        static float scale = 1.0f;
-        ImGui::SliderFloat("scale", &scale, 0.0f, 10.0f);
-        shader.setUniform("scale", scale);
         //  color picker
         ImGui::ColorEdit3("color", color);
         //  multiply triangle's color with this color
@@ -137,6 +134,10 @@ int main(int, char**) {
         ImGui::End();
 
         shader.setUniform("iResolution", (float)width, (float)height);
+
+        shader.setUniform("transform", Matrix4f::transform(Vector3f(0.0, 0.0, 0.0), Vector3f(0.0, 0.0, 0.0), Vector3f(1.0, 1.0, 1.0)));
+        shader.setUniform("view", Matrix4f::view(camera.getPosition(), camera.getRotation()));
+        shader.setUniform("projection", camera.getProjection());
 
         // Rendering
         ImGui::Render();
