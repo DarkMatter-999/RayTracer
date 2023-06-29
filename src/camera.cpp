@@ -33,7 +33,7 @@ void Camera::Update() {
     float dx = static_cast<float>(newMouseX - oldMouseX);
     float dy = static_cast<float>(newMouseY - oldMouseY);
 
-    Vector3f::add(rotation, Vector3f(-dy * mouseSens, -dx * mouseSens, 0));
+    rotation = Vector3f::add(rotation, Vector3f(-dy * mouseSens, -dx * mouseSens, 0));
 
     // Limit x rotation to a certain range
     if (rotation.x > 90) {
@@ -41,9 +41,6 @@ void Camera::Update() {
     } else if (rotation.x < -90) {
         rotation.x = -90;
     }
-
-    delta.x = dx * sensitivity;
-    delta.y = dy * sensitivity;
 
     oldMouseX = newMouseX;
     oldMouseY = newMouseY;
@@ -63,8 +60,4 @@ Vector3f Camera::getRotation() {
 
 Matrix4f Camera::getProjection() {
     return projection;
-}
-
-Vector2f Camera::getDelta() {
-    return delta;
 }

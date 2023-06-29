@@ -92,6 +92,7 @@ int main(int, char**) {
     int width, height;
     bool vsync = true;
     float FOV = 70.0f;
+    bool mouseHide = false;
 
     glfwGetWindowSize(window, &width, &height);
 
@@ -107,6 +108,15 @@ int main(int, char**) {
         // Generally you may always pass all inputs to dear imgui, and hide them from your application based on those two flags.
         input.Update();
         camera.Update();
+
+        if (Input::IsKeyPressed(ImGuiKey_Escape))
+            break;
+
+        if (Input::IsKeyPressed(ImGuiKey_E)) {
+            mouseHide = !mouseHide;
+        }
+
+        input.mouseState(mouseHide);
 
         double currFrameTime = glfwGetTime();
         double frameTime = (currFrameTime - prevFrameTime);
@@ -139,7 +149,6 @@ int main(int, char**) {
         shader.setUniform("position", camera.getPosition());
         shader.setUniform("dimension", Vector2f(width, height));
         shader.setUniform("rotation", camera.getRotation());
-        shader.setUniform("delta", camera.getDelta());
         shader.setUniform("projection", camera.getProjection());
 
         // Rendering

@@ -2,6 +2,7 @@
 #define INPUT_H
 
 #include <GLFW/glfw3.h>
+
 #include "imgui.h"
 
 class Input {
@@ -16,6 +17,7 @@ class Input {
     static double GetMouseY();
     static double GetScrollX();
     static double GetScrollY();
+    void mouseState(bool state);
 
    private:
     GLFWwindow* window_;

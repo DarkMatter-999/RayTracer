@@ -9,10 +9,8 @@
 class Camera {
    private:
     Vector3f position, rotation;
-    Vector2f delta = Vector2f(0.0f, 0.0f);
-    float sensitivity = 0.002f;
     Matrix4f projection;
-    float moveSpeed = 0.25f, mouseSens = 0.25f;
+    float moveSpeed = 0.125f, mouseSens = 0.25f;
     double oldMouseX = 0, oldMouseY = 0, newMouseX, newMouseY;
     float distance = 2.0f, angle = 0, verticalAngle = 0, horizontalAngle = 0;
     float FOV, nearClip, farClip;
@@ -26,7 +24,6 @@ class Camera {
     Vector3f getPosition();
     Vector3f getRotation();
     Matrix4f getProjection();
-    Vector2f getDelta();
 };
 
 #endif  // CAMERA_H

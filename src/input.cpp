@@ -21,14 +21,14 @@ void Input::Update() {
 
 // Check if a key is currently pressed
 bool Input::IsKeyPressed(ImGuiKey key) {
-    if (ImGui::IsKeyPressed(key))
+    if (ImGui::GetIO().KeysDown[key])
         return true;
     return false;
 }
 
 // Check if a mouse button is currently pressed
 bool Input::IsMouseButtonPressed(ImGuiMouseButton button) {
-    if (ImGui::IsMouseClicked(button))
+    if (ImGui::GetIO().MouseDown[button])
         return true;
 
     return false;
@@ -50,4 +50,11 @@ double Input::GetScrollX() {
 
 double Input::GetScrollY() {
     return scrollY;
+}
+
+void Input::mouseState(bool state) {
+    // Disable the cursor
+    ImGui::SetMouseCursor(state ? ImGuiMouseCursor_Arrow : ImGuiMouseCursor_None);
+
+    // glfwSetInputMode(window_, GLFW_CURSOR, state ? GLFW_CURSOR_NORMAL : GLFW_CURSOR_DISABLED);
 }
