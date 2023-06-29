@@ -1,5 +1,7 @@
 #include "camera.h"
 
+#include <iostream>
+
 #include "imgui.h"
 #include "input.h"
 #include "maths.h"
@@ -16,17 +18,17 @@ void Camera::Update() {
     float z = std::cos(toRadians(rotation.y)) * moveSpeed;
 
     if (Input::IsKeyPressed(ImGuiKey_A))
-        Vector3f::add(position, Vector3f(-z, 0, x));
+        position = Vector3f::add(position, Vector3f(-z, 0, x));
     if (Input::IsKeyPressed(ImGuiKey_D))
-        Vector3f::add(position, Vector3f(z, 0, -x));
+        position = Vector3f::add(position, Vector3f(z, 0, -x));
     if (Input::IsKeyPressed(ImGuiKey_W))
-        Vector3f::add(position, Vector3f(-x, 0, -z));
+        position = Vector3f::add(position, Vector3f(-x, 0, -z));
     if (Input::IsKeyPressed(ImGuiKey_S))
-        Vector3f::add(position, Vector3f(x, 0, z));
+        position = Vector3f::add(position, Vector3f(x, 0, z));
     if (Input::IsKeyPressed(ImGuiKey_Space))
-        Vector3f::add(position, Vector3f(0, moveSpeed, 0));
+        position = Vector3f::add(position, Vector3f(0, moveSpeed, 0));
     if (Input::IsKeyPressed(ImGuiKey_LeftCtrl))
-        Vector3f::add(position, Vector3f(0, -moveSpeed, 0));
+        position = Vector3f::add(position, Vector3f(0, -moveSpeed, 0));
 
     float dx = static_cast<float>(newMouseX - oldMouseX);
     float dy = static_cast<float>(newMouseY - oldMouseY);
@@ -39,6 +41,9 @@ void Camera::Update() {
     } else if (rotation.x < -90) {
         rotation.x = -90;
     }
+
+    delta.x = dx * sensitivity;
+    delta.y = dy * sensitivity;
 
     oldMouseX = newMouseX;
     oldMouseY = newMouseY;
@@ -58,4 +63,8 @@ Vector3f Camera::getRotation() {
 
 Matrix4f Camera::getProjection() {
     return projection;
+}
+
+Vector2f Camera::getDelta() {
+    return delta;
 }

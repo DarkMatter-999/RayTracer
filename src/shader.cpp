@@ -139,3 +139,11 @@ void Shader::setUniform(const std::string& name, float x, float y, float z) cons
 void Shader::setUniform(const std::string& name, Matrix4f value) const {
     this->setMat4(name.c_str(), value.getAll());
 }
+
+void Shader::setUniform(const std::string& name, Vector3f value) const {
+    this->setVec3(name.c_str(), value.x, value.y, value.z);
+}
+
+void Shader::setUniform(const std::string& name, Vector2f value) const {
+    this->setVec2(name.c_str(), value.x, value.y);
+}
