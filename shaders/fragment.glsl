@@ -42,13 +42,8 @@ struct HitInfo {
   Material material;
 };
 
-uint pcg_hash(uint inp) {
-    uint state = inp * 747796405u + 2891336453u;
-    uint word = ((state >> ((state >> 28u) + 4u)) ^ state) * 277803737u;
-    return (word >> 22u) ^ word;
-}
-
 mat4 perspective(float fovy, float aspect, float near, float far);
+
 mat4 lookAt(vec3 eye, vec3 at, vec3 up);
 void RecalculateProjection();
 mat4 translate(vec3 translation);
@@ -59,7 +54,6 @@ HitInfo RaySphere(Ray ray, vec3 spherePosition, float radius);
 HitInfo CalculateRayCollision(Ray ray);
 
 int NumSphere = 2;
-int renderDepth = 10;
 Sphere Spheres[2] = Sphere[](Sphere(vec3(0.0, -2, 0.0), 0.25, Material(vec3(0.0,1.0,0.0))), Sphere(vec3(0.25, -3.0, 0.5), 0.125, Material(vec3(1.0,0.0,0.0)))); 
 
 void main()
@@ -76,11 +70,8 @@ void main()
     //float d = max(dot(normal, -lightDir) ,0);
     //  s1.material.Color *= d;
     //color = s1.material.Color;
-    int coor = gl_FragCoord.y * iResolution.x + gl_FragCoord.x;
 
-    FragColor = vec4(pcg_hash(coor)/255);
-
-    // FragColor = vec4(CalculateRayCollision(ray).material.Color, 1.0);
+    FragColor = vec4(CalculateRayCollision(ray).material.Color, 1.0);
 }
 
 mat4 perspective(float fovy, float aspect, float near, float far) {
