@@ -34,6 +34,14 @@ struct Sphere {
   Material material;
 };
 
+struct HitInfo {
+  bool didHit;
+  float dist;
+  vec3 hitPoint;
+  vec3 normal;
+  Material material;
+};
+
 mat4 perspective(float fovy, float aspect, float near, float far);
 
 mat4 lookAt(vec3 eye, vec3 at, vec3 up);
@@ -42,44 +50,28 @@ mat4 translate(vec3 translation);
 mat4 rotate(float angle, vec3 axis);
 mat4 view(vec3 position, vec3 rotation);
 void RecalculateView();
+HitInfo RaySphere(Ray ray, vec3 spherePosition, float radius);
+HitInfo CalculateRayCollision(Ray ray);
+
+int NumSphere = 2;
+Sphere Spheres[2] = Sphere[](Sphere(vec3(0.0, -2, 0.0), 0.25, Material(vec3(0.0,1.0,0.0))), Sphere(vec3(0.25, -3.0, 0.5), 0.125, Material(vec3(1.0,0.0,0.0)))); 
 
 void main()
 {
-    Sphere s1 = Sphere(vec3(0.0, 0.5, 0.5), 0.5, Material(vertexColor.xyz));
-    Ray ray = Ray(position - s1.position, vec3(0));
+    Ray ray = Ray(position, vec3(0));
 
     vec3 color = vec3(0);
 
     RecalculateProjection();
     RecalculateView();
-    vec2 coord = (gl_FragCoord.xy / iResolution) * 2.0 - 1.0;
-    vec4 target = m_InverseProjection * vec4(coord.x, coord.y, 1, 1);
-	  ray.Direction = vec3(m_InverseView * vec4(normalize(vec3(target) / target.w), 0)); // World space
 
-    float a = dot(ray.Direction, ray.Direction);
-    float b = 2.0 * dot(ray.Origin, ray.Direction);
-    float c = dot(ray.Origin, ray.Origin) - s1.radius * s1.radius;
+    //vec3 lightDir = normalize(vec3(-1));
+    //vec3 normal = normalize(h1);
+    //float d = max(dot(normal, -lightDir) ,0);
+    //  s1.material.Color *= d;
+    //color = s1.material.Color;
 
-    float D = b*b - 4.0*a*c;
-
-    if (D >= 0.0) {
-        float t0 = (-b + sqrt(D)) / (2.0 * a);
-        float t1 = (-b - sqrt(D)) / (2.0 * a);
-
-        vec3 h0 = ray.Origin + ray.Direction * t0;
-        vec3 h1 = ray.Origin + ray.Direction * t1;
-
-        vec3 lightDir = normalize(vec3(-1));
-
-        vec3 normal = normalize(h1);
-
-        float d = max(dot(normal, -lightDir) ,0);
-
-        s1.material.Color *= d;
-        color = s1.material.Color;
-    }
-
-    FragColor = vec4(color, 1.0);
+    FragColor = vec4(CalculateRayCollision(ray).material.Color, 1.0);
 }
 
 mat4 perspective(float fovy, float aspect, float near, float far) {
@@ -170,3 +162,48 @@ void RecalculateView()
   m_InverseView = inverse(m_View);
 }
 
+HitInfo RaySphere(Ray ray, vec3 spherePosition, float radius) { 
+  HitInfo rayHit = HitInfo(false, 0, vec3(0), vec3(0), Material(vec3(0)));
+
+  vec3 rayOriginOffset = ray.Origin - spherePosition;
+
+  vec2 coord = (gl_FragCoord.xy / iResolution) * 2.0 - 1.0;
+  vec4 target = m_InverseProjection * vec4(coord.x, coord.y, 1, 1);
+  ray.Direction = vec3(m_InverseView * vec4(normalize(vec3(target) / target.w), 0)); // World space
+
+  float a = dot(ray.Direction, ray.Direction);
+  float b = 2.0 * dot(rayOriginOffset, ray.Direction);
+  float c = dot(rayOriginOffset, rayOriginOffset) - radius * radius;
+
+  float D = b*b - 4.0*a*c;
+
+  if (D >= 0.0) {
+      float dist = (-b - sqrt(D)) / (2.0 * a);
+
+      if(dist >= 0) {
+        rayHit.didHit = true;
+        rayHit.dist = dist;
+        rayHit.hitPoint = ray.Origin + ray.Direction * dist;
+        rayHit.normal = normalize(rayHit.hitPoint - spherePosition);
+      }
+  }
+
+  return rayHit;
+}
+
+HitInfo CalculateRayCollision(Ray ray) {
+  HitInfo closestHit = HitInfo(false, 0, vec3(0), vec3(0), Material(vec3(0)));
+
+  closestHit.dist = 1000000.0;
+
+  for(int i = 0; i < NumSphere; i++) {
+    Sphere s = Spheres[i];
+    HitInfo hit = RaySphere(ray, s.position, s.radius);
+
+    if(hit.didHit && hit.dist < closestHit.dist) {
+      closestHit.didHit = hit.didHit;
+      closestHit.material.Color = s.material.Color;
+    }
+  }
+  return closestHit;
+}
