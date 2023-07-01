@@ -20,6 +20,68 @@ float m_FarClip = 100.0;
 vec3 m_Position = position;
 vec3 m_ForwardDirection = vec3(0.0, 0.0, 0.0);
 
+struct Ray {
+  vec3 Origin;
+  vec3 Direction;
+};
+struct Material {
+  vec3 Color;
+};
+
+struct Sphere {
+  vec3 position;
+  float radius;
+  Material material;
+};
+
+mat4 perspective(float fovy, float aspect, float near, float far);
+
+mat4 lookAt(vec3 eye, vec3 at, vec3 up);
+void RecalculateProjection();
+mat4 translate(vec3 translation);
+mat4 rotate(float angle, vec3 axis);
+mat4 view(vec3 position, vec3 rotation);
+void RecalculateView();
+
+void main()
+{
+    Sphere s1 = Sphere(vec3(0.0, 0.5, 0.5), 0.5, Material(vertexColor.xyz));
+    Ray ray = Ray(position - s1.position, vec3(0));
+
+    vec3 color = vec3(0);
+
+    RecalculateProjection();
+    RecalculateView();
+    vec2 coord = (gl_FragCoord.xy / iResolution) * 2.0 - 1.0;
+    vec4 target = m_InverseProjection * vec4(coord.x, coord.y, 1, 1);
+	  ray.Direction = vec3(m_InverseView * vec4(normalize(vec3(target) / target.w), 0)); // World space
+
+    float a = dot(ray.Direction, ray.Direction);
+    float b = 2.0 * dot(ray.Origin, ray.Direction);
+    float c = dot(ray.Origin, ray.Origin) - s1.radius * s1.radius;
+
+    float D = b*b - 4.0*a*c;
+
+    if (D >= 0.0) {
+        float t0 = (-b + sqrt(D)) / (2.0 * a);
+        float t1 = (-b - sqrt(D)) / (2.0 * a);
+
+        vec3 h0 = ray.Origin + ray.Direction * t0;
+        vec3 h1 = ray.Origin + ray.Direction * t1;
+
+        vec3 lightDir = normalize(vec3(-1));
+
+        vec3 normal = normalize(h1);
+
+        float d = max(dot(normal, -lightDir) ,0);
+
+        s1.material.Color *= d;
+        color = s1.material.Color;
+    }
+
+    FragColor = vec4(color, 1.0);
+}
+
 mat4 perspective(float fovy, float aspect, float near, float far) {
   float f = 1.0 / tan(fovy / 2.0);
   float rangeInv = 1.0 / (near - far);
@@ -48,13 +110,6 @@ mat4 lookAt(vec3 eye, vec3 at, vec3 up)
   };
 
   return viewMatrix;
-}
-
-void RecalculateForward() {
-    float x = cos(delta.x) * cos(delta.y);
-    float y = sin(delta.x) * cos(delta.y);
-    float z = sin(delta.y);
-    m_ForwardDirection = vec3(x, 0, z);
 }
 
 void RecalculateProjection()
@@ -111,50 +166,7 @@ mat4 view(vec3 position, vec3 rotation) {
 
 void RecalculateView()
 {
-	// m_View = lookAt(m_Position, m_Position + m_ForwardDirection * 0.00001, vec3(0, 1, 0));
-	// m_InverseView = inverse(m_View);
   m_View = view(position, rotation);
   m_InverseView = inverse(m_View);
 }
 
-void main()
-{
-    vec3 rayOrigin = position;
-    vec3 color = vertexColor.xyz;
-    float radius = 0.5;
-
-    RecalculateProjection();
-    // RecalculateForward();
-    RecalculateView();
-    vec2 ndc = (gl_FragCoord.xy / iResolution) * 2.0 - 1.0;
-    vec2 coord = ndc; // -1 -> 1
-    vec4 target = m_InverseProjection * vec4(coord.x, coord.y, 1, 1);
-	  vec3 rayDirection = vec3(m_InverseView * vec4(normalize(vec3(target) / target.w), 0)); // World space
-
-    float a = dot(rayDirection, rayDirection);
-    float b = 2.0 * dot(rayOrigin, rayDirection);
-    float c = dot(rayOrigin, rayOrigin) - radius * radius;
-
-    float D = b*b - 4.0*a*c;
-
-    if (D >= 0.0) {
-        color = vec3(1.0, 0.0, 1.0);
-
-        float t0 = (-b + sqrt(D)) / (2.0 * a);
-        float t1 = (-b - sqrt(D)) / (2.0 * a);
-
-        vec3 h0 = rayOrigin + rayDirection * t0;
-        vec3 h1 = rayOrigin + rayDirection * t1;
-
-        vec3 lightDir = normalize(vec3(-1));
-
-        vec3 normal = normalize(h1);
-
-        float d = max(dot(normal, -lightDir) ,0);
-
-        color *= d;
-
-    }
-
-    FragColor = vec4(color, 1.0);
-} 

@@ -14,9 +14,11 @@ void Input::Update() {
     // Poll for events
     glfwPollEvents();
 
-    ImVec2 mousePos = ImGui::GetMousePos();
-    mouseX = mousePos.x;
-    mouseY = mousePos.y;
+    if (!mouseLock) {
+        ImVec2 mousePos = ImGui::GetMousePos();
+        mouseX = mousePos.x;
+        mouseY = mousePos.y;
+    }
 }
 
 // Check if a key is currently pressed
@@ -57,4 +59,8 @@ void Input::mouseState(bool state) {
     ImGui::SetMouseCursor(state ? ImGuiMouseCursor_Arrow : ImGuiMouseCursor_None);
 
     // glfwSetInputMode(window_, GLFW_CURSOR, state ? GLFW_CURSOR_NORMAL : GLFW_CURSOR_DISABLED);
+}
+
+void Input::setMouseLock(bool state) {
+    mouseLock = state;
 }

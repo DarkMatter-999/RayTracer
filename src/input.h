@@ -18,6 +18,7 @@ class Input {
     static double GetScrollX();
     static double GetScrollY();
     void mouseState(bool state);
+    void setMouseLock(bool state);
 
    private:
     GLFWwindow* window_;
@@ -26,6 +27,7 @@ class Input {
     static double mouseY;
     static double scrollX;
     static double scrollY;
+    bool mouseLock = false;
 };
 
 #endif  // INPUT_H

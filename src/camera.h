@@ -11,6 +11,7 @@ class Camera {
     Vector3f position, rotation;
     Matrix4f projection;
     float moveSpeed = 0.125f, mouseSens = 0.25f;
+    bool lockMouse = false;
     double oldMouseX = 0, oldMouseY = 0, newMouseX, newMouseY;
     float distance = 2.0f, angle = 0, verticalAngle = 0, horizontalAngle = 0;
     float FOV, nearClip, farClip;

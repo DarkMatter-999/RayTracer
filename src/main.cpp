@@ -93,6 +93,7 @@ int main(int, char**) {
     bool vsync = true;
     float FOV = 70.0f;
     bool mouseHide = false;
+    bool mouseLock = false;
 
     glfwGetWindowSize(window, &width, &height);
 
@@ -116,6 +117,11 @@ int main(int, char**) {
             mouseHide = !mouseHide;
         }
 
+        if (Input::IsKeyPressed(ImGuiKey_Q)) {
+            input.setMouseLock(mouseLock);
+            mouseLock = !mouseLock;
+        }
+
         input.mouseState(mouseHide);
 
         double currFrameTime = glfwGetTime();
@@ -137,7 +143,7 @@ int main(int, char**) {
 
         ImGui::Text("%.0f FPS | %.2f ms", (1.0f / frameTime), (frameTime * 1000.0f));
 
-        static float color[4] = {0.0f, 0.0f, 0.0f, 1.0f};
+        static float color[4] = {1.0f, 1.0f, 1.0f, 1.0f};
         //  color picker
         ImGui::ColorEdit3("color", color);
         //  multiply triangle's color with this color
