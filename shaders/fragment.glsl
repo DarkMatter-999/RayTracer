@@ -26,6 +26,8 @@ struct Ray {
 };
 struct Material {
   vec3 Color;
+  vec3 emissionColor;
+  float emmisionStrength;
 };
 
 struct Sphere {
@@ -42,8 +44,13 @@ struct HitInfo {
   Material material;
 };
 
-mat4 perspective(float fovy, float aspect, float near, float far);
+uint pcg_hash(inout uint inp);
+float pcg_hash_to_float(inout uint inp);
+float randomNormalDistribution(inout uint inp);
+vec3 randomDirection(inout uint state);
+vec3 randomHemisphereDirection(vec3 normal, inout uint state);
 
+mat4 perspective(float fovy, float aspect, float near, float far);
 mat4 lookAt(vec3 eye, vec3 at, vec3 up);
 void RecalculateProjection();
 mat4 translate(vec3 translation);
@@ -53,25 +60,64 @@ void RecalculateView();
 HitInfo RaySphere(Ray ray, vec3 spherePosition, float radius);
 HitInfo CalculateRayCollision(Ray ray);
 
-int NumSphere = 2;
-Sphere Spheres[2] = Sphere[](Sphere(vec3(0.0, -2, 0.0), 0.25, Material(vec3(0.0,1.0,0.0))), Sphere(vec3(0.25, -3.0, 0.5), 0.125, Material(vec3(1.0,0.0,0.0)))); 
+uniform int maxBounces;
+uniform int raysPerPixel;
+int NumSphere = 4;
+Sphere Spheres[4] = Sphere[](
+                            Sphere(vec3(0.0, -2, 0.0), 0.25, Material(vec3(0.0,1.0,0.0), vec3(1), 3)),
+                            Sphere(vec3(-0.5, -2, 0), 0.25, Material(vec3(1.0,0.0,0.0), vec3(0), 0)),
+                            Sphere(vec3(0.5, -2, 0), 0.25, Material(vec3(0.0,0.0,1.0), vec3(0), 0)),
+                            Sphere(vec3(0, -2.5, 3), 2.75, Material(vec3(0.0,1.0,0.0), vec3(0), 0))
+                            ); 
+
+vec3 TraceRay(Ray ray, inout uint state) {
+    vec3 raycolor = vec3(1);
+    vec3 light = vec3(0);
+
+    for(int i=0; i <= maxBounces; i++) {
+      HitInfo hit = CalculateRayCollision(ray);
+      if(hit.didHit) {
+        ray.Origin = hit.hitPoint;
+        ray.Direction = randomHemisphereDirection(hit.normal,state);
+
+        Material material = hit.material;
+        vec3 emmittedLight = material.emissionColor * material.emmisionStrength;
+        light += emmittedLight * raycolor;
+        raycolor *= material.Color;
+
+      } else {
+        break;
+      }
+    }
+    return light;
+}
 
 void main()
 {
-    Ray ray = Ray(position, vec3(0));
-
-    vec3 color = vec3(0);
-
     RecalculateProjection();
     RecalculateView();
-
     //vec3 lightDir = normalize(vec3(-1));
     //vec3 normal = normalize(h1);
     //float d = max(dot(normal, -lightDir) ,0);
     //  s1.material.Color *= d;
     //color = s1.material.Color;
 
-    FragColor = vec4(CalculateRayCollision(ray).material.Color, 1.0);
+    vec2 coord = (gl_FragCoord.xy / iResolution) * 2.0 - 1.0;
+    vec4 target = m_InverseProjection * vec4(coord.x, coord.y, 1, 1);
+
+    Ray ray = Ray(position, vec3(0));
+    ray.Direction = vec3(m_InverseView * vec4(normalize(vec3(target) / target.w), 0)); // World space
+    // ray.Direction = normalize( - ray.Origin);
+    uint pixelIndex = uint(gl_FragCoord.y * dimension.x) + uint(gl_FragCoord.x);
+
+    vec3 totalLight = vec3(0);
+
+    for(int i=0; i < raysPerPixel; i++) {
+      totalLight += TraceRay(ray, pixelIndex);
+    }
+
+    vec3 pixelColor = totalLight / raysPerPixel;
+    FragColor = vec4(pixelColor, 1.0);
 }
 
 mat4 perspective(float fovy, float aspect, float near, float far) {
@@ -163,13 +209,8 @@ void RecalculateView()
 }
 
 HitInfo RaySphere(Ray ray, vec3 spherePosition, float radius) { 
-  HitInfo rayHit = HitInfo(false, 0, vec3(0), vec3(0), Material(vec3(0)));
-
+  HitInfo rayHit = HitInfo(false, 0, vec3(0), vec3(0), Material(vec3(0), vec3(0), 0));
   vec3 rayOriginOffset = ray.Origin - spherePosition;
-
-  vec2 coord = (gl_FragCoord.xy / iResolution) * 2.0 - 1.0;
-  vec4 target = m_InverseProjection * vec4(coord.x, coord.y, 1, 1);
-  ray.Direction = vec3(m_InverseView * vec4(normalize(vec3(target) / target.w), 0)); // World space
 
   float a = dot(ray.Direction, ray.Direction);
   float b = 2.0 * dot(rayOriginOffset, ray.Direction);
@@ -192,7 +233,7 @@ HitInfo RaySphere(Ray ray, vec3 spherePosition, float radius) {
 }
 
 HitInfo CalculateRayCollision(Ray ray) {
-  HitInfo closestHit = HitInfo(false, 0, vec3(0), vec3(0), Material(vec3(0)));
+  HitInfo closestHit = HitInfo(false, 0, vec3(0), vec3(0), Material(vec3(0), vec3(0), 0));
 
   closestHit.dist = 1000000.0;
 
@@ -201,9 +242,49 @@ HitInfo CalculateRayCollision(Ray ray) {
     HitInfo hit = RaySphere(ray, s.position, s.radius);
 
     if(hit.didHit && hit.dist < closestHit.dist) {
-      closestHit.didHit = hit.didHit;
-      closestHit.material.Color = s.material.Color;
+      closestHit = hit;
+      closestHit.material = s.material;
     }
   }
   return closestHit;
 }
+
+
+uint pcg_hash(inout uint state) {
+    state = state * 747796405u + 2891336453u;
+    uint word = ((state >> ((state >> 28u) + 4u)) ^ state) * 277803737u;
+    return (word >> 22u) ^ word;
+}
+
+float pcg_hash_to_float(inout uint state) {
+    state = state * 747796405u + 2891336453u;
+    uint word = ((state >> ((state >> 28u) + 4u)) ^ state) * 277803737u;
+    uint hash_value = (word >> 22u) ^ word;
+    float random_float = float(hash_value) / 4294967296.0;
+    return random_float;
+}
+
+float randomNormalDistribution(inout uint inp) {
+    float theta = 2.0 * 3.1415926 * pcg_hash_to_float(inp);
+    float rho = sqrt(-2 * log(pcg_hash_to_float(inp)));
+    return rho * cos(theta);
+}
+
+vec3 randomDirection(inout uint state) {
+    float x = randomNormalDistribution(state);
+    float y = randomNormalDistribution(state);
+    float z = randomNormalDistribution(state);
+
+    return vec3(normalize(vec3(x, y, z)));
+} 
+
+vec3 randomHemisphereDirection(vec3 normal, inout uint state) {
+    float u = pcg_hash_to_float(state);
+    float v = pcg_hash_to_float(state);
+    float theta = 2 * 3.1415629 * u;
+    float phi = acos(2 * v - 1);
+    vec3 dir = vec3(sin(phi) * cos(theta), sin(phi) * sin(theta), cos(phi));
+    dir *= sign(dot(normal, dir));
+    return dir;
+}
+

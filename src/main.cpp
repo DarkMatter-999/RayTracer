@@ -94,6 +94,8 @@ int main(int, char**) {
     float FOV = 70.0f;
     bool mouseHide = false;
     bool mouseLock = false;
+    int maxBounces = 1;
+    int raysPerPixel = 1;
 
     glfwGetWindowSize(window, &width, &height);
 
@@ -143,6 +145,9 @@ int main(int, char**) {
 
         ImGui::Text("%.0f FPS | %.2f ms", (1.0f / frameTime), (frameTime * 1000.0f));
 
+        ImGui::SliderInt("MaxBounces", &maxBounces, 0, 100);
+        ImGui::SliderInt("Rays per Pixel", &raysPerPixel, 0, 100);
+
         static float color[4] = {1.0f, 1.0f, 1.0f, 1.0f};
         //  color picker
         ImGui::ColorEdit3("color", color);
@@ -156,6 +161,9 @@ int main(int, char**) {
         shader.setUniform("dimension", Vector2f(width, height));
         shader.setUniform("rotation", camera.getRotation());
         shader.setUniform("projection", camera.getProjection());
+
+        shader.setUniform("maxBounces", maxBounces);
+        shader.setUniform("raysPerPixel", raysPerPixel);
 
         // Rendering
         ImGui::Render();
