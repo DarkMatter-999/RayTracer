@@ -29,6 +29,8 @@ struct Material {
   vec3 emissionColor;
   float emmisionStrength;
   float smoothness;
+  vec3 specularColor;
+  float specProb;
 };
 
 struct Sphere {
@@ -60,40 +62,35 @@ mat4 view(vec3 position, vec3 rotation);
 void RecalculateView();
 HitInfo RaySphere(Ray ray, vec3 spherePosition, float radius);
 HitInfo CalculateRayCollision(Ray ray);
+vec3 TraceRay(Ray ray, inout uint state);
 
 uniform int maxBounces;
 uniform int raysPerPixel;
-int NumSphere = 4;
-Sphere Spheres[4] = Sphere[](
-                            Sphere(vec3(1, -8, -3), 3, Material(vec3(1.0,1.0,1.0), vec3(1), 5, 1)),
-                            Sphere(vec3(-0.5, -2, 0), 0.25, Material(vec3(1.0,0.0,0.0), vec3(0), 0, 1)),
-                            Sphere(vec3(0.5, -2, 0), 0.25, Material(vec3(0.0,0.0,1.0), vec3(0), 0, 0)),
-                            Sphere(vec3(0, -2.5, 3), 2.85, Material(vec3(1.0,1.0,1.0), vec3(0), 0, 0.75))
+int NumSphere = 6;
+Sphere Spheres[6] = Sphere[](// Position,Radius,DiffuseColor,EmmisionColor,EmmisionStrength,Smoothness,SpecularColor,SpecularProb
+                            Sphere(vec3(1, -8, -3), 3, Material(vec3(1.0,1.0,1.0), vec3(1), 5, 1,vec3(1), 0)), // background light
+                            Sphere(vec3(0, -2.5, 3), 2.85, Material(vec3(1.0,1.0,1.0), vec3(0), 0, 0.75, vec3(0), 0)), // ground
+                            Sphere(vec3(-0.5, -2, 0), 0.25, Material(vec3(1.0,0.0,0.0), vec3(0), 0, 0.75, vec3(1), 0.5)), // Red
+                            Sphere(vec3(-1, -2, 0), 0.25, Material(vec3(0.0,0.0,1.0), vec3(0), 0, 1, vec3(0.1,0.5,1), 1)),   // Blue
+                            Sphere(vec3(-1.5, -2, 0), 0.25, Material(vec3(0.0,1.0,0.0), vec3(0), 0, 0, vec3(0), 0)), // Green
+                            Sphere(vec3(1, -2, 0), 0.25, Material(vec3(0.0,1.0,1.0), vec3(0), 0, 0, vec3(0), 0))     // Cyan
                             ); 
 
-vec3 TraceRay(Ray ray, inout uint state) {
-    vec3 raycolor = vec3(1);
-    vec3 light = vec3(0);
+vec3 GroundColour = vec3(0.50, 0.49, 0.48);
+vec3 SkyColourHorizon = vec3(0.760, 0.895, 0.99);
+vec3 SkyColourZenith = vec3(0.550, 0.880, 1);
+vec3 SunDirection = vec3(0, 1.0, 0);
+float SunFocus = 0.75;
+float SunIntensity = 0.1;
 
-    for(int i=0; i <= maxBounces; i++) {
-      HitInfo hit = CalculateRayCollision(ray);
-      Material material = hit.material;
-      if(hit.didHit) {
-        ray.Origin = hit.hitPoint;
-        vec3 diffuseDir = normalize(hit.normal + randomDirection(state));
-        vec3 specularDir = reflect(ray.Direction, hit.normal);
-        ray.Direction = mix(diffuseDir, specularDir, material.smoothness);
-
-        vec3 emmittedLight = material.emissionColor * material.emmisionStrength;
-        float lightStrength = dot(hit.normal, ray.Direction);
-        light += emmittedLight * raycolor;
-        raycolor *= material.Color;
-
-      } else {
-        break;
-      }
-    }
-    return light;
+vec3 Envirnoment(Ray ray) {
+  float skyGradientT = pow(smoothstep(0, 0.4, ray.Direction.y), 0.35);
+  vec3 skyGradient = mix(SkyColourHorizon, SkyColourZenith, skyGradientT);
+  float sun = pow(max(0, dot(ray.Direction, -SunDirection)), SunFocus) * SunIntensity;
+  // Combine ground, sky, and sun
+  float groundToSkyT = smoothstep(-0.01, 0, ray.Direction.y);
+  vec3 composite = mix(GroundColour, skyGradient, groundToSkyT) + sun * float(groundToSkyT>=1);
+  return composite;
 }
 
 void main()
@@ -213,7 +210,7 @@ void RecalculateView()
 }
 
 HitInfo RaySphere(Ray ray, vec3 spherePosition, float radius) { 
-  HitInfo rayHit = HitInfo(false, 0, vec3(0), vec3(0), Material(vec3(0), vec3(0), 0, 0));
+  HitInfo rayHit = HitInfo(false, 0, vec3(0), vec3(0), Material(vec3(0), vec3(0), 0, 0, vec3(0), 0));
   vec3 rayOriginOffset = ray.Origin - spherePosition;
 
   float a = dot(ray.Direction, ray.Direction);
@@ -237,7 +234,7 @@ HitInfo RaySphere(Ray ray, vec3 spherePosition, float radius) {
 }
 
 HitInfo CalculateRayCollision(Ray ray) {
-  HitInfo closestHit = HitInfo(false, 0, vec3(0), vec3(0), Material(vec3(0), vec3(0), 0, 0));
+  HitInfo closestHit = HitInfo(false, 0, vec3(0), vec3(0), Material(vec3(0), vec3(0), 0, 0, vec3(0), 0));
 
   closestHit.dist = 1000000.0;
 
@@ -292,3 +289,29 @@ vec3 randomHemisphereDirection(vec3 normal, inout uint state) {
     return dir;
 }
 
+vec3 TraceRay(Ray ray, inout uint state) {
+    vec3 raycolor = vec3(1);
+    vec3 light = vec3(0);
+
+    for(int i=0; i <= maxBounces; i++) {
+      HitInfo hit = CalculateRayCollision(ray);
+      Material material = hit.material;
+      if(hit.didHit) {
+        ray.Origin = hit.hitPoint;
+        vec3 diffuseDir = normalize(hit.normal + randomDirection(state));
+        vec3 specularDir = reflect(ray.Direction, hit.normal);
+        bool makespec = material.specProb >= pcg_hash_to_float(state);
+        ray.Direction = mix(diffuseDir, specularDir, material.smoothness * float(makespec));
+
+        vec3 emmittedLight = material.emissionColor * material.emmisionStrength;
+        float lightStrength = dot(hit.normal, ray.Direction);
+        light += emmittedLight * raycolor;
+        raycolor *= mix(material.Color, material.specularColor, float(makespec));
+
+      } else {
+        light += Envirnoment(ray) * raycolor;
+        break;
+      }
+    }
+    return light;
+}
