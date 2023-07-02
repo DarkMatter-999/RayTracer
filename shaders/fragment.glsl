@@ -28,6 +28,7 @@ struct Material {
   vec3 Color;
   vec3 emissionColor;
   float emmisionStrength;
+  float smoothness;
 };
 
 struct Sphere {
@@ -64,10 +65,10 @@ uniform int maxBounces;
 uniform int raysPerPixel;
 int NumSphere = 4;
 Sphere Spheres[4] = Sphere[](
-                            Sphere(vec3(0.0, -2, 0.0), 0.25, Material(vec3(0.0,1.0,0.0), vec3(1), 3)),
-                            Sphere(vec3(-0.5, -2, 0), 0.25, Material(vec3(1.0,0.0,0.0), vec3(0), 0)),
-                            Sphere(vec3(0.5, -2, 0), 0.25, Material(vec3(0.0,0.0,1.0), vec3(0), 0)),
-                            Sphere(vec3(0, -2.5, 3), 2.75, Material(vec3(0.0,1.0,0.0), vec3(0), 0))
+                            Sphere(vec3(1, -8, -3), 3, Material(vec3(1.0,1.0,1.0), vec3(1), 5, 1)),
+                            Sphere(vec3(-0.5, -2, 0), 0.25, Material(vec3(1.0,0.0,0.0), vec3(0), 0, 1)),
+                            Sphere(vec3(0.5, -2, 0), 0.25, Material(vec3(0.0,0.0,1.0), vec3(0), 0, 0)),
+                            Sphere(vec3(0, -2.5, 3), 2.85, Material(vec3(1.0,1.0,1.0), vec3(0), 0, 0.75))
                             ); 
 
 vec3 TraceRay(Ray ray, inout uint state) {
@@ -76,12 +77,15 @@ vec3 TraceRay(Ray ray, inout uint state) {
 
     for(int i=0; i <= maxBounces; i++) {
       HitInfo hit = CalculateRayCollision(ray);
+      Material material = hit.material;
       if(hit.didHit) {
         ray.Origin = hit.hitPoint;
-        ray.Direction = randomHemisphereDirection(hit.normal,state);
+        vec3 diffuseDir = normalize(hit.normal + randomDirection(state));
+        vec3 specularDir = reflect(ray.Direction, hit.normal);
+        ray.Direction = mix(diffuseDir, specularDir, material.smoothness);
 
-        Material material = hit.material;
         vec3 emmittedLight = material.emissionColor * material.emmisionStrength;
+        float lightStrength = dot(hit.normal, ray.Direction);
         light += emmittedLight * raycolor;
         raycolor *= material.Color;
 
@@ -209,7 +213,7 @@ void RecalculateView()
 }
 
 HitInfo RaySphere(Ray ray, vec3 spherePosition, float radius) { 
-  HitInfo rayHit = HitInfo(false, 0, vec3(0), vec3(0), Material(vec3(0), vec3(0), 0));
+  HitInfo rayHit = HitInfo(false, 0, vec3(0), vec3(0), Material(vec3(0), vec3(0), 0, 0));
   vec3 rayOriginOffset = ray.Origin - spherePosition;
 
   float a = dot(ray.Direction, ray.Direction);
@@ -233,7 +237,7 @@ HitInfo RaySphere(Ray ray, vec3 spherePosition, float radius) {
 }
 
 HitInfo CalculateRayCollision(Ray ray) {
-  HitInfo closestHit = HitInfo(false, 0, vec3(0), vec3(0), Material(vec3(0), vec3(0), 0));
+  HitInfo closestHit = HitInfo(false, 0, vec3(0), vec3(0), Material(vec3(0), vec3(0), 0, 0));
 
   closestHit.dist = 1000000.0;
 
