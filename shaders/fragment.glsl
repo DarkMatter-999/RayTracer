@@ -31,6 +31,8 @@ struct Material {
   float smoothness;
   vec3 specularColor;
   float specProb;
+  float transparency;
+  float refractiveIndex;
 };
 
 struct Sphere {
@@ -63,17 +65,18 @@ void RecalculateView();
 HitInfo RaySphere(Ray ray, vec3 spherePosition, float radius);
 HitInfo CalculateRayCollision(Ray ray);
 vec3 TraceRay(Ray ray, inout uint state);
+vec3 RefractRay(vec3 incidentDir, vec3 normal, float refractiveIndex);
 
 uniform int maxBounces;
 uniform int raysPerPixel;
 int NumSphere = 6;
-Sphere Spheres[6] = Sphere[](// Position,Radius,DiffuseColor,EmmisionColor,EmmisionStrength,Smoothness,SpecularColor,SpecularProb
-                            Sphere(vec3(1, -8, -3), 3, Material(vec3(1.0,1.0,1.0), vec3(1), 5, 1,vec3(1), 0)), // background light
-                            Sphere(vec3(0, -2.5, 3), 2.85, Material(vec3(1.0,1.0,1.0), vec3(0), 0, 0.75, vec3(0), 0)), // ground
-                            Sphere(vec3(-0.5, -2, 0), 0.25, Material(vec3(1.0,0.0,0.0), vec3(0), 0, 0.75, vec3(1), 0.5)), // Red
-                            Sphere(vec3(-1, -2, 0), 0.25, Material(vec3(0.0,0.0,1.0), vec3(0), 0, 1, vec3(0.1,0.5,1), 1)),   // Blue
-                            Sphere(vec3(-1.5, -2, 0), 0.25, Material(vec3(0.0,1.0,0.0), vec3(0), 0, 0, vec3(0), 0)), // Green
-                            Sphere(vec3(1, -2, 0), 0.25, Material(vec3(0.0,1.0,1.0), vec3(0), 0, 0, vec3(0), 0))     // Cyan
+Sphere Spheres[6] = Sphere[](// Position,Radius,DiffuseColor,EmmisionColor,EmmisionStrength,Smoothness,SpecularColor,SpecularProb,Transparency,RefractiveIndex
+                            Sphere(vec3(1, -8, -3), 3, Material(vec3(1.0,1.0,1.0), vec3(1), 5, 1,vec3(1), 0, 0, 0)), // background light
+                            Sphere(vec3(0, -2.5, 3), 2.85, Material(vec3(1.0,1.0,1.0), vec3(0), 0, 0.75, vec3(0), 0, 0, 0)), // ground
+                            Sphere(vec3(-0.5, -2, 0), 0.25, Material(vec3(1.0,0.0,0.0), vec3(0), 0, 0.75, vec3(1), 0.5, 0, 0)), // Red
+                            Sphere(vec3(-1, -2, 0), 0.25, Material(vec3(0.0,0.0,1.0), vec3(0), 0, 1, vec3(0.1,0.5,1), 1, 0, 0)),   // Blue
+                            Sphere(vec3(-1.5, -2, 0), 0.25, Material(vec3(0.0,1.0,0.0), vec3(0), 0, 0, vec3(0), 0, 0, 0)), // Green
+                            Sphere(vec3(0, -2, -0.0625), 0.25, Material(vec3(1.0,1.0,1.0), vec3(0), 0, 1, vec3(0), 0, 1, 2))     // Cyan
                             ); 
 
 vec3 GroundColour = vec3(0.50, 0.49, 0.48);
@@ -82,6 +85,8 @@ vec3 SkyColourZenith = vec3(0.550, 0.880, 1);
 vec3 SunDirection = vec3(0, 1.0, 0);
 float SunFocus = 0.75;
 float SunIntensity = 0.1;
+
+float AirRefractiveIndex = 1.0;
 
 vec3 Envirnoment(Ray ray) {
   float skyGradientT = pow(smoothstep(0, 0.4, ray.Direction.y), 0.35);
@@ -210,7 +215,7 @@ void RecalculateView()
 }
 
 HitInfo RaySphere(Ray ray, vec3 spherePosition, float radius) { 
-  HitInfo rayHit = HitInfo(false, 0, vec3(0), vec3(0), Material(vec3(0), vec3(0), 0, 0, vec3(0), 0));
+  HitInfo rayHit = HitInfo(false, 0, vec3(0), vec3(0), Material(vec3(0), vec3(0), 0, 0, vec3(0), 0, 0, 0));
   vec3 rayOriginOffset = ray.Origin - spherePosition;
 
   float a = dot(ray.Direction, ray.Direction);
@@ -219,7 +224,7 @@ HitInfo RaySphere(Ray ray, vec3 spherePosition, float radius) {
 
   float D = b*b - 4.0*a*c;
 
-  if (D >= 0.0) {
+  if (D >= 0.0) { 
       float dist = (-b - sqrt(D)) / (2.0 * a);
 
       if(dist >= 0) {
@@ -234,7 +239,7 @@ HitInfo RaySphere(Ray ray, vec3 spherePosition, float radius) {
 }
 
 HitInfo CalculateRayCollision(Ray ray) {
-  HitInfo closestHit = HitInfo(false, 0, vec3(0), vec3(0), Material(vec3(0), vec3(0), 0, 0, vec3(0), 0));
+  HitInfo closestHit = HitInfo(false, 0, vec3(0), vec3(0), Material(vec3(0), vec3(0), 0, 0, vec3(0), 0, 0, 0));
 
   closestHit.dist = 1000000.0;
 
@@ -289,9 +294,37 @@ vec3 randomHemisphereDirection(vec3 normal, inout uint state) {
     return dir;
 }
 
+vec3 RefractRay(vec3 incidentDir, vec3 normal, float refractiveIndex) {
+  float cosTheta1 = dot(incidentDir, normal);
+  float eta;
+
+  if (cosTheta1 < 0) {
+    // Entering the medium
+    eta = AirRefractiveIndex / refractiveIndex;
+    cosTheta1 = -cosTheta1;
+  } else {
+    // Exiting the medium
+    eta = refractiveIndex;
+    normal = -normal;
+  }
+
+  float k = 1.0 - eta * eta * (1.0 - cosTheta1 * cosTheta1);
+  
+  if (k < 0.0) {
+    // Total internal reflection TIR
+    return reflect(incidentDir, normal);
+  } else {
+    vec3 refractedDir = eta * incidentDir + (eta * cosTheta1 - sqrt(k)) * normal;
+    return normalize(refractedDir);
+  }
+}
+
 vec3 TraceRay(Ray ray, inout uint state) {
     vec3 raycolor = vec3(1);
     vec3 light = vec3(0);
+    vec3 accumulatedColor = vec3(0);
+    float attenuation = 1.0;
+
 
     for(int i=0; i <= maxBounces; i++) {
       HitInfo hit = CalculateRayCollision(ray);
@@ -299,19 +332,33 @@ vec3 TraceRay(Ray ray, inout uint state) {
       if(hit.didHit) {
         ray.Origin = hit.hitPoint;
         vec3 diffuseDir = normalize(hit.normal + randomDirection(state));
-        vec3 specularDir = reflect(ray.Direction, hit.normal);
-        bool makespec = material.specProb >= pcg_hash_to_float(state);
-        ray.Direction = mix(diffuseDir, specularDir, material.smoothness * float(makespec));
+
+        if(material.transparency > 0.0) {
+            vec3 incidentDir = ray.Direction;
+            vec3 normal = hit.normal;
+            float refractiveIndex = material.refractiveIndex;
+            ray.Direction = RefractRay(incidentDir, normal, refractiveIndex); 
+        } else {
+            vec3 specularDir = reflect(ray.Direction, hit.normal);
+            bool makespec = material.specProb >= pcg_hash_to_float(state);
+            ray.Direction = mix(diffuseDir, specularDir, material.smoothness * float(makespec));
+        }
 
         vec3 emmittedLight = material.emissionColor * material.emmisionStrength;
-        float lightStrength = dot(hit.normal, ray.Direction);
-        light += emmittedLight * raycolor;
-        raycolor *= mix(material.Color, material.specularColor, float(makespec));
+        light += emmittedLight * raycolor * attenuation;
+
+        raycolor *= material.Color;
+        attenuation *= material.Color.x;
+
+        if(material.transparency < 1.0) {
+            vec3 transparentColor = vec3(1.0) - material.Color;
+            accumulatedColor += transparentColor * raycolor * attenuation;
+        }
 
       } else {
         light += Envirnoment(ray) * raycolor;
         break;
       }
     }
-    return light;
+    return light + accumulatedColor;
 }
