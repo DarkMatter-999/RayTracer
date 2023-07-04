@@ -70,14 +70,16 @@ vec3 RefractRay(vec3 incidentDir, vec3 normal, float refractiveIndex);
 uniform int maxBounces;
 uniform int raysPerPixel;
 uniform int frameNo;
-int NumSphere = 6;
-Sphere Spheres[6] = Sphere[](// Position,Radius,DiffuseColor,EmmisionColor,EmmisionStrength,Smoothness,SpecularColor,SpecularProb,Transparency,RefractiveIndex
+uniform float focus;
+int NumSphere = 7;
+Sphere Spheres[7] = Sphere[](// Position,Radius,DiffuseColor,EmmisionColor,EmmisionStrength,Smoothness,SpecularColor,SpecularProb,Transparency,RefractiveIndex
                             Sphere(vec3(1, -8, -3), 3, Material(vec3(1.0,1.0,1.0), vec3(1), 5, 1,vec3(1), 0, 0, 0)), // background light
                             Sphere(vec3(0, -2.5, 3), 2.85, Material(vec3(1.0,1.0,1.0), vec3(0), 0, 0.75, vec3(0), 0, 0, 0)), // ground
-                            Sphere(vec3(-0.5, -2, 0), 0.25, Material(vec3(0.0,0.0,1.0), vec3(0), 0, 1, vec3(0.1,0.5,1), 1, 0, 0)),   // Blue
-                            Sphere(vec3(-1, -2, 0), 0.25, Material(vec3(1.0,0.0,0.0), vec3(0), 0, 0.75, vec3(1), 0.5, 0, 0)), // Red
+                            Sphere(vec3(-0.5, -2, 0), 0.25, Material(vec3(0.0,0.0,1.0), vec3(0), 0, 1, vec3(1,0.5,1), 1, 0, 0)),   // Blue
+                            Sphere(vec3(-1, -2, 0), 0.25, Material(vec3(1.0,0.0,0.0), vec3(0), 0, 1, vec3(1), 0.85, 0, 0)), // Red
                             Sphere(vec3(-1.5, -2, 0), 0.25, Material(vec3(0.0,1.0,0.0), vec3(0), 0, 0, vec3(0), 0, 0, 0)), // Green
-                            Sphere(vec3(0, -2, -0.0625), 0.25, Material(vec3(1.0,1.0,1.0), vec3(0), 0, 1, vec3(0), 0, 1, 2.4))     // Cyan
+                            Sphere(vec3(0, -2, -0.0625), 0.25, Material(vec3(1.0,1.0,1.0), vec3(0), 0, 1, vec3(0), 0, 1, 2.4)),     // Cyan
+                            Sphere(vec3(1, 8, -3), 2, Material(vec3(1.0,0.85,0.15), vec3(1,0.85, 0.15), 2, 1,vec3(1), 0, 0, 0)) // foreground light
                             ); 
 
 bool envEnable = true;
@@ -89,6 +91,8 @@ float SunFocus = 0.75;
 float SunIntensity = 0.1;
 
 float AirRefractiveIndex = 1.0;
+
+float focusSensitivity = 1000;
 
 vec3 Envirnoment(Ray ray) {
   float skyGradientT = pow(smoothstep(0, 0.4, ray.Direction.y), 0.35);
@@ -113,14 +117,14 @@ void main()
     vec2 coord = (gl_FragCoord.xy / iResolution) * 2.0 - 1.0;
     vec4 target = m_InverseProjection * vec4(coord.x, coord.y, 1, 1);
 
-    Ray ray = Ray(position, vec3(0));
-    ray.Direction = vec3(m_InverseView * vec4(normalize(vec3(target) / target.w), 0)); // World space
     // ray.Direction = normalize( - ray.Origin);
     uint pixelIndex = uint(gl_FragCoord.y * dimension.x) + uint(gl_FragCoord.x) * uint(frameNo);
 
     vec3 totalLight = vec3(0);
 
     for(int i=0; i < raysPerPixel; i++) {
+      Ray ray = Ray(position, vec3(0));
+      ray.Direction = vec3(m_InverseView * vec4(normalize(vec3(target) / target.w), 0)) - randomDirection(pixelIndex) * (focus/focusSensitivity); // World space  
       totalLight += TraceRay(ray, pixelIndex);
     }
 

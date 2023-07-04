@@ -97,6 +97,7 @@ int main(int, char**) {
     int maxBounces = 4;
     int raysPerPixel = 8;
     int frameNo = 0;
+    float focus = 0;
 
     glfwGetWindowSize(window, &width, &height);
 
@@ -148,6 +149,7 @@ int main(int, char**) {
 
         ImGui::SliderInt("MaxBounces", &maxBounces, 0, 100);
         ImGui::SliderInt("Rays per Pixel", &raysPerPixel, 0, 100);
+        ImGui::SliderFloat("Focus", &focus, 0, 1);
 
         static float color[4] = {1.0f, 1.0f, 1.0f, 1.0f};
         //  color picker
@@ -168,6 +170,7 @@ int main(int, char**) {
 
         shader.setUniform("frameNo", frameNo);
         frameNo++;
+        shader.setUniform("focus", focus);
 
         // Rendering
         ImGui::Render();
