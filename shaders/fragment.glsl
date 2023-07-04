@@ -69,16 +69,18 @@ vec3 RefractRay(vec3 incidentDir, vec3 normal, float refractiveIndex);
 
 uniform int maxBounces;
 uniform int raysPerPixel;
+uniform int frameNo;
 int NumSphere = 6;
 Sphere Spheres[6] = Sphere[](// Position,Radius,DiffuseColor,EmmisionColor,EmmisionStrength,Smoothness,SpecularColor,SpecularProb,Transparency,RefractiveIndex
                             Sphere(vec3(1, -8, -3), 3, Material(vec3(1.0,1.0,1.0), vec3(1), 5, 1,vec3(1), 0, 0, 0)), // background light
                             Sphere(vec3(0, -2.5, 3), 2.85, Material(vec3(1.0,1.0,1.0), vec3(0), 0, 0.75, vec3(0), 0, 0, 0)), // ground
-                            Sphere(vec3(-0.5, -2, 0), 0.25, Material(vec3(1.0,0.0,0.0), vec3(0), 0, 0.75, vec3(1), 0.5, 0, 0)), // Red
-                            Sphere(vec3(-1, -2, 0), 0.25, Material(vec3(0.0,0.0,1.0), vec3(0), 0, 1, vec3(0.1,0.5,1), 1, 0, 0)),   // Blue
+                            Sphere(vec3(-0.5, -2, 0), 0.25, Material(vec3(0.0,0.0,1.0), vec3(0), 0, 1, vec3(0.1,0.5,1), 1, 0, 0)),   // Blue
+                            Sphere(vec3(-1, -2, 0), 0.25, Material(vec3(1.0,0.0,0.0), vec3(0), 0, 0.75, vec3(1), 0.5, 0, 0)), // Red
                             Sphere(vec3(-1.5, -2, 0), 0.25, Material(vec3(0.0,1.0,0.0), vec3(0), 0, 0, vec3(0), 0, 0, 0)), // Green
-                            Sphere(vec3(0, -2, -0.0625), 0.25, Material(vec3(1.0,1.0,1.0), vec3(0), 0, 1, vec3(0), 0, 1, 2))     // Cyan
+                            Sphere(vec3(0, -2, -0.0625), 0.25, Material(vec3(1.0,1.0,1.0), vec3(0), 0, 1, vec3(0), 0, 1, 2.4))     // Cyan
                             ); 
 
+bool envEnable = true;
 vec3 GroundColour = vec3(0.50, 0.49, 0.48);
 vec3 SkyColourHorizon = vec3(0.760, 0.895, 0.99);
 vec3 SkyColourZenith = vec3(0.550, 0.880, 1);
@@ -114,7 +116,7 @@ void main()
     Ray ray = Ray(position, vec3(0));
     ray.Direction = vec3(m_InverseView * vec4(normalize(vec3(target) / target.w), 0)); // World space
     // ray.Direction = normalize( - ray.Origin);
-    uint pixelIndex = uint(gl_FragCoord.y * dimension.x) + uint(gl_FragCoord.x);
+    uint pixelIndex = uint(gl_FragCoord.y * dimension.x) + uint(gl_FragCoord.x) * uint(frameNo);
 
     vec3 totalLight = vec3(0);
 
@@ -294,7 +296,7 @@ vec3 randomHemisphereDirection(vec3 normal, inout uint state) {
     return dir;
 }
 
-vec3 RefractRay(vec3 incidentDir, vec3 normal, float refractiveIndex) {
+vec3 RefractRay(vec3 incidentDir, vec3 normal, float refractiveIndex, inout uint state) {
   float cosTheta1 = dot(incidentDir, normal);
   float eta;
 
@@ -309,13 +311,20 @@ vec3 RefractRay(vec3 incidentDir, vec3 normal, float refractiveIndex) {
   }
 
   float k = 1.0 - eta * eta * (1.0 - cosTheta1 * cosTheta1);
-  
+
   if (k < 0.0) {
-    // Total internal reflection TIR
+    // Total internal reflection
     return reflect(incidentDir, normal);
   } else {
-    vec3 refractedDir = eta * incidentDir + (eta * cosTheta1 - sqrt(k)) * normal;
-    return normalize(refractedDir);
+    // Schlick approximation
+    float R0 = pow((AirRefractiveIndex - refractiveIndex) / (AirRefractiveIndex + refractiveIndex), 2.0);
+    float schlickTerm = R0 + (1.0 - R0) * pow(1.0 - cosTheta1, 5.0);
+    if (pcg_hash_to_float(state) < schlickTerm) {
+      return reflect(incidentDir, normal);
+    } else {
+      vec3 refractedDir = eta * incidentDir + (eta * cosTheta1 - sqrt(k)) * normal;
+      return refractedDir;
+    }
   }
 }
 
@@ -337,7 +346,8 @@ vec3 TraceRay(Ray ray, inout uint state) {
             vec3 incidentDir = ray.Direction;
             vec3 normal = hit.normal;
             float refractiveIndex = material.refractiveIndex;
-            ray.Direction = RefractRay(incidentDir, normal, refractiveIndex); 
+            ray.Direction = RefractRay(incidentDir, normal, refractiveIndex, state);
+
         } else {
             vec3 specularDir = reflect(ray.Direction, hit.normal);
             bool makespec = material.specProb >= pcg_hash_to_float(state);
@@ -356,7 +366,9 @@ vec3 TraceRay(Ray ray, inout uint state) {
         }
 
       } else {
-        light += Envirnoment(ray) * raycolor;
+        if(envEnable) {
+          light += Envirnoment(ray) * raycolor;
+        }
         break;
       }
     }

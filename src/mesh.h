@@ -11,6 +11,7 @@ class Mesh {
    public:
     Mesh(const std::vector<float>& vertices, const std::vector<unsigned int>& indices, const std::vector<float>& colors);
     void render(Shader& shader);
+    void use(Shader& shader);
 
    private:
     GLuint VAO, VBO, EBO;

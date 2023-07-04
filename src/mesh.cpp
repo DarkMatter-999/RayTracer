@@ -35,13 +35,15 @@ Mesh::Mesh(const std::vector<float>& vertices, const std::vector<unsigned int>& 
 }
 
 void Mesh::render(Shader& shader) {
-    // Bind VAO and shader
-    glBindVertexArray(VAO);
-    shader.use();
-
     // Render the mesh
     glDrawElements(GL_TRIANGLES, vertexCount, GL_UNSIGNED_INT, 0);
 
     // Unbind VAO
     glBindVertexArray(0);
+}
+
+void Mesh::use(Shader& shader) {
+    // Bind VAO and shader
+    glBindVertexArray(VAO);
+    shader.use();
 }

@@ -29,11 +29,11 @@ class Shader {
     void setUniform(const std::string& name, Vector3f value) const;
     void setUniform(const std::string& name, Vector2f value) const;
 
+    unsigned int ID;
    private:
     std::string vertexShaderSource;
     std::string fragmentShaderSource;
 
-    unsigned int ID;
 };
 
 #endif  // SHADER_H

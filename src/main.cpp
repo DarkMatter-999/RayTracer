@@ -94,8 +94,9 @@ int main(int, char**) {
     float FOV = 70.0f;
     bool mouseHide = false;
     bool mouseLock = false;
-    int maxBounces = 1;
-    int raysPerPixel = 1;
+    int maxBounces = 4;
+    int raysPerPixel = 8;
+    int frameNo = 0;
 
     glfwGetWindowSize(window, &width, &height);
 
@@ -165,14 +166,17 @@ int main(int, char**) {
         shader.setUniform("maxBounces", maxBounces);
         shader.setUniform("raysPerPixel", raysPerPixel);
 
+        shader.setUniform("frameNo", frameNo);
+        frameNo++;
+
         // Rendering
         ImGui::Render();
-        int display_w, display_h;
-        glfwGetFramebufferSize(window, &display_w, &display_h);
-        glViewport(0, 0, display_w, display_h);
+
+        glViewport(0, 0, width, height);
         glClearColor(clear_color.x * clear_color.w, clear_color.y * clear_color.w, clear_color.z * clear_color.w, clear_color.w);
         glClear(GL_COLOR_BUFFER_BIT);
 
+        mesh.use(shader);
         mesh.render(shader);
 
         ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
