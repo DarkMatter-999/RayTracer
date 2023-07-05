@@ -35,13 +35,6 @@ void Camera::Update() {
 
     rotation = Vector3f::add(rotation, Vector3f(-dy * mouseSens, -dx * mouseSens, 0));
 
-    // Limit x rotation to a certain range
-    if (rotation.x > 90) {
-        rotation.x = 90;
-    } else if (rotation.x < -90) {
-        rotation.x = -90;
-    }
-
     oldMouseX = newMouseX;
     oldMouseY = newMouseY;
 }
