@@ -72,14 +72,17 @@ uniform int raysPerPixel;
 uniform int frameNo;
 uniform float focus;
 int NumSphere = 7;
+
+// Position (x: -left +right, y: -down +up, z: -in +out)
+
 Sphere Spheres[7] = Sphere[](// Position,Radius,DiffuseColor,EmmisionColor,EmmisionStrength,Smoothness,SpecularColor,SpecularProb,Transparency,RefractiveIndex
                             Sphere(vec3(1, 3, -8), 3, Material(vec3(1.0,1.0,1.0), vec3(1), 5, 1,vec3(1), 0, 0, 0)), // background light
-                            Sphere(vec3(0, -3, -2.5), 2.85, Material(vec3(1.0,1.0,1.0), vec3(0), 0, 0.75, vec3(0), 0, 0, 0)), // ground
-                            Sphere(vec3(-0.5, 0, -2), 0.25, Material(vec3(0.0,0.0,1.0), vec3(0), 0, 1, vec3(0,0,1), 1, 0, 0)),   // Blue
-                            Sphere(vec3(-1, 0, -2), 0.25, Material(vec3(1.0,0.0,0.0), vec3(0), 0, 0.85, vec3(1), 0.15, 0, 0)), // Red
-                            Sphere(vec3(-1.5, 0, -2), 0.25, Material(vec3(0.0,1.0,0.0), vec3(0), 0, 0, vec3(0), 0, 0, 0)), // Green
-                            Sphere(vec3(0, 0.0625, -2), 0.25, Material(vec3(1.0,1.0,1.0), vec3(0), 0, 1, vec3(0), 0, 1, 2.4)),     // Glass
-                            Sphere(vec3(1, 3, 8), 2, Material(vec3(1.0,0.85,0.15), vec3(1,0.85, 0.15), 2, 1,vec3(1), 0, 0, 0)) // foreground light
+                            Sphere(vec3(0, -30, -2.5), 29.8, Material(vec3(1.0,1.0,1.0), vec3(0), 0, 0.75, vec3(0), 0, 0, 0)), // ground
+                            Sphere(vec3(-0.75, 0.0625, -2), 0.25, Material(vec3(0.0,1.0,0.0), vec3(0), 0, 0, vec3(0), 0, 0, 0)), // Green
+                            Sphere(vec3(-0.25, 0.0625, -2), 0.25, Material(vec3(1.0,0.0,0.0), vec3(0), 0, 0.90, vec3(1), 0.15, 0, 0)), // Red
+                            Sphere(vec3(0.25, 0.0625, -2), 0.25, Material(vec3(0.0,0.0,1.0), vec3(0), 0, 1, vec3(0,0,1), 1, 0, 0)),   // Blue
+                            Sphere(vec3(0.75, 0.0625, -2), 0.25, Material(vec3(1.0,1.0,1.0), vec3(0), 0, 1, vec3(0), 0, 1, 2.0)),     // Glass
+                            Sphere(vec3(1, 3, 8), 2, Material(vec3(1.0,0.85,0.15), vec3(1,0.85, 0.15), 0.85, 1,vec3(1), 0, 0, 0)) // foreground light
                             ); 
 
 bool envEnable = true;
@@ -95,11 +98,11 @@ float AirRefractiveIndex = 1.0;
 float focusSensitivity = 1000;
 
 vec3 Envirnoment(Ray ray) {
-  float skyGradientT = pow(smoothstep(0, 0.4, ray.Direction.y), 0.35);
+  float skyGradientT = pow(smoothstep(0.0, 0.4, ray.Direction.y), 0.35);
   vec3 skyGradient = mix(SkyColourHorizon, SkyColourZenith, skyGradientT);
   float sun = pow(max(0, dot(ray.Direction, -SunDirection)), SunFocus) * SunIntensity;
   // Combine ground, sky, and sun
-  float groundToSkyT = smoothstep(-0.01, 0, ray.Direction.y);
+  float groundToSkyT = smoothstep(-0.01, 0.0, ray.Direction.y);
   vec3 composite = mix(GroundColour, skyGradient, groundToSkyT) + sun * float(groundToSkyT>=1);
   return composite;
 }

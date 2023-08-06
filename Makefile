@@ -11,18 +11,18 @@ UNAME_S := $(shell uname -s)
 LINUX_GL_LIBS = -lglu32 -lopengl32 -lglfw3 -lglew32
 
 CXXFLAGS = -std=c++11 -I$(IMGUI_DIR) -I$(IMGUI_DIR)/backends
-CXXFLAGS += -g -Wall -Wformat
+CXXFLAGS += -g -Wall -Wformat 
 LIBS += $(LINUX_GL_LIBS)
 
 
 $(BUILD_DIR)/%.o:$(SRC_DIR)/%.cpp
-	$(CXX) $(CXXFLAGS) -c -o $@ $<
+	$(CXX) $(CXXFLAGS) -static -c -o $@ $<
 
 $(BUILD_DIR)/%.o:$(IMGUI_DIR)/%.cpp
-	$(CXX) $(CXXFLAGS) -c -o $@ $<
+	$(CXX) $(CXXFLAGS) -static  -c -o $@ $<
 
 $(BUILD_DIR)/%.o:$(IMGUI_DIR)/backends/%.cpp
-	$(CXX) $(CXXFLAGS) -c -o $@ $<
+	$(CXX) $(CXXFLAGS) -static -c -o $@ $<
 
 all: $(EXE)
 	@echo "Build complete"

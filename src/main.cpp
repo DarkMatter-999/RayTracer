@@ -91,13 +91,13 @@ int main(int, char**) {
     double prevFrameTime = glfwGetTime();
     int width, height;
     bool vsync = true;
-    float FOV = 70.0f;
+    float FOV = 100.0f;
     bool mouseHide = false;
     bool mouseLock = false;
     int maxBounces = 4;
-    int raysPerPixel = 8;
+    int raysPerPixel = 10;
     int frameNo = 0;
-    float focus = 0;
+    float focus = 0.049;
 
     glfwGetWindowSize(window, &width, &height);
 
@@ -151,11 +151,11 @@ int main(int, char**) {
         ImGui::SliderInt("Rays per Pixel", &raysPerPixel, 0, 100);
         ImGui::SliderFloat("Focus", &focus, 0, 1);
 
-        static float color[4] = {1.0f, 1.0f, 1.0f, 1.0f};
+        // static float color[4] = {1.0f, 1.0f, 1.0f, 1.0f};
         //  color picker
-        ImGui::ColorEdit3("color", color);
+        // ImGui::ColorEdit3("color", color);
         //  multiply triangle's color with this color
-        shader.setUniform("color", color[0], color[1], color[2]);
+        // shader.setUniform("color", color[0], color[1], color[2]);
         ImGui::End();
 
         shader.setUniform("iResolution", (float)width, (float)height);
