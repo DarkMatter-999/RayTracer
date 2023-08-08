@@ -73,16 +73,18 @@ uniform int frameNo;
 uniform float focus;
 int NumSphere = 7;
 
+uniform float bounce;
+
 // Position (x: -left +right, y: -down +up, z: -in +out)
 
 Sphere Spheres[7] = Sphere[](// Position,Radius,DiffuseColor,EmmisionColor,EmmisionStrength,Smoothness,SpecularColor,SpecularProb,Transparency,RefractiveIndex
-                            Sphere(vec3(1, 3, -8), 3, Material(vec3(1.0,1.0,1.0), vec3(1), 5, 1,vec3(1), 0, 0, 0)), // background light
-                            Sphere(vec3(0, -30, -2.5), 29.8, Material(vec3(1.0,1.0,1.0), vec3(0), 0, 0.75, vec3(0), 0, 0, 0)), // ground
-                            Sphere(vec3(-0.75, 0.0625, -2), 0.25, Material(vec3(0.0,1.0,0.0), vec3(0), 0, 0, vec3(0), 0, 0, 0)), // Green
-                            Sphere(vec3(-0.25, 0.0625, -2), 0.25, Material(vec3(1.0,0.0,0.0), vec3(0), 0, 0.90, vec3(1), 0.15, 0, 0)), // Red
-                            Sphere(vec3(0.25, 0.0625, -2), 0.25, Material(vec3(0.0,0.0,1.0), vec3(0), 0, 1, vec3(0,0,1), 1, 0, 0)),   // Blue
-                            Sphere(vec3(0.75, 0.0625, -2), 0.25, Material(vec3(1.0,1.0,1.0), vec3(0), 0, 1, vec3(0), 0, 1, 2.0)),     // Glass
-                            Sphere(vec3(1, 3, 8), 2, Material(vec3(1.0,0.85,0.15), vec3(1,0.85, 0.15), 0.85, 1,vec3(1), 0, 0, 0)) // foreground light
+                            Sphere(vec3(1, 5, -8), 3, Material(vec3(1.0,1.0,1.0), vec3(1), 5, 1,vec3(1), 0, 0, 0)), // background light
+                            Sphere(vec3(0, -30, -2.5), 29.8, Material(vec3(0.75,0.75, 0.75), vec3(0), 0, 0.5, vec3(0), 0, 0, 0)), // ground
+                            Sphere(vec3(-0.75, 0.0625 + 0.25 * sin(bounce), -2), 0.25, Material(vec3(0.0,1.0,0.0), vec3(0), 0, 0, vec3(0), 0, 0, 0)), // Green
+                            Sphere(vec3(-0.25, 0.0625 + 0.45 * sin(bounce), -2), 0.25, Material(vec3(1.0,0.0,0.0), vec3(0), 0, 0.90, vec3(1), 0.15, 0, 0)), // Red
+                            Sphere(vec3(0.25, 0.0625 + 0.30 * sin(bounce), -2), 0.25, Material(vec3(0.0,0.0,1.0), vec3(0), 0, 1, vec3(0,0,1), 1, 0, 0)),   // Blue
+                            Sphere(vec3(0.75, 0.0625 + 0.4 * sin(bounce), -2), 0.25, Material(vec3(1.0,1.0,1.0), vec3(0), 0, 1, vec3(0), 0, 1, 2.0)),     // Glass
+                            Sphere(vec3(1, 3, 8), 2, Material(vec3(1.0,1.0,0.85), vec3(1,0.95, 0.85), 0.85, 1,vec3(1), 0, 0, 0)) // foreground light
                             ); 
 
 bool envEnable = true;

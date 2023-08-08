@@ -21,6 +21,9 @@ Please click on the links above to access the documentation for each component.
 
 Here are some images showcasing the Raytracing project:
 
+
+![Image 4](./assets/image4.png)
+![Image 3](./assets/image3.png)
 ![Image 2](./assets/image2.png)
 ![Image 1](./assets/image1.png)
 

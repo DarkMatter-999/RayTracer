@@ -94,10 +94,14 @@ int main(int, char**) {
     float FOV = 100.0f;
     bool mouseHide = false;
     bool mouseLock = false;
-    int maxBounces = 4;
+    int maxBounces = 8;
     int raysPerPixel = 10;
     int frameNo = 0;
     float focus = 0.049;
+
+    float bounceSpeed = 2.25;
+    float bounce = 0;
+    bool up = true;
 
     glfwGetWindowSize(window, &width, &height);
 
@@ -151,6 +155,8 @@ int main(int, char**) {
         ImGui::SliderInt("Rays per Pixel", &raysPerPixel, 0, 100);
         ImGui::SliderFloat("Focus", &focus, 0, 1);
 
+        ImGui::SliderFloat("Bounce Speed", &bounceSpeed, 0, 3);
+
         // static float color[4] = {1.0f, 1.0f, 1.0f, 1.0f};
         //  color picker
         // ImGui::ColorEdit3("color", color);
@@ -171,6 +177,20 @@ int main(int, char**) {
         shader.setUniform("frameNo", frameNo);
         frameNo++;
         shader.setUniform("focus", focus);
+
+
+        if(up) {
+            bounce += bounceSpeed * frameTime;
+        } else {
+            bounce -= bounceSpeed * frameTime;
+        }
+        
+        if(bounce >= 3.14) {
+            up = false;
+        } else if(bounce <= 0.0) {
+            up = true;
+        }
+        shader.setUniform("bounce", bounce);
 
         // Rendering
         ImGui::Render();
